@@ -17,9 +17,18 @@ class Transport:
 
     def to_dict(self) -> dict:
         return {
-            "capcity": self.capacity
+            "type": self.__class__.__name__,
+            "capacity": self.capacity
         }
 
+    @staticmethod
+    def from_dict(data: dict) -> 'Transport':
+        if data["type"] == "Bus":
+            return Bus.from_dict(data)
+        elif data["type"] == "Plane":
+            return Plane.from_dict(data)
+        else:
+            return Transport(data["capacity"])
 
 
 class Bus(Transport):
@@ -47,20 +56,26 @@ class Bus(Transport):
     # метод словаря
     def to_dict(self) -> dict:
         return {
-            "capcity": self.capacity,
-            "color": self.color,
-            "route_number": self.route_number
+            "type": self.__class__.__name__,
+            "capacity": self.capacity,
+            "route_number": self.route_number,
+            "color": self.color
+
         }
+
+    @staticmethod
+    def from_dict(data: dict) -> 'Bus':
+        return Bus(data["capacity"], data["route_number"], data["color"])
+
 
 class Plane(Transport):
 
     def __init__(self, capacity: int, flight_name: str, flight_number: int) -> None:
         super().__init__(capacity)
-        self.capacity = capacity
         self.flight_number = flight_number
+        self.flight_name = flight_name
         if flight_number <= 0:
             raise ValueError("номер рейса должен быть положительным числом")
-        self.flight_name = flight_name
 
     pass
 
@@ -78,12 +93,15 @@ class Plane(Transport):
 
     def to_dict(self) -> dict:
         return {
-            "capcity": self.capacity,
+            "type": self.__class__.__name__,
+            "capacity": self.capacity,
             "flight_name": self.flight_name,
             "flight_number": self.flight_number
         }
 
-
+    @staticmethod
+    def from_dict(data: dict) -> 'Plane':
+        return Plane(data["capacity"], data["flight_name"], data["flight_number"])
 
     try:
         with open('data.json', 'r') as file:
@@ -94,12 +112,31 @@ class Plane(Transport):
         print("Не удалось прочитать файл")
         data = []
 
-    bus1 = (17, 228, "white")
+# Функция для записи списка объектов в JSON-файл
+def save_to_file(filename, objects):
+    with open(filename, 'w') as file:
+        json.dump([obj.to_dict() for obj in objects], file, indent=4)
 
-    js1 = json.dumps(bus1)
-    print('\n')
-    print(js1)
+# Функция для чтения объектов из JSON-файла
+def load_from_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            data = json.load(file)
+            return [Transport.from_dict(item) for item in data]
+    except FileNotFoundError:
+        print("Файл не найден")
+        return []
 
-    js2 = json.dumps(bus1, indent=4) # indent - отступ в формате json (т.е. 4 пробела)
-    print(js2)
+# Пример использования
+bus = Bus(40, 120, "blue")
+plane = Plane(180, "Flight-777", 777)
 
+# Запись объектов в файл
+objects_to_save = [bus, plane]
+save_to_file('data.json', objects_to_save)
+
+# Чтение объектов из файла
+loaded_objects = load_from_file('data.json')
+
+for obj in loaded_objects:
+    print(f"Тип: {obj.__class__.__name__}, Данные: {obj.to_dict()}")

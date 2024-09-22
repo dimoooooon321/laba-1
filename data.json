@@ -1,6 +1,14 @@
-
-{
-"capacity" : 18,
-"color": "black",
-"route_number" : 551
-}
+[
+    {
+        "type": "Bus",
+        "capacity": 40,
+        "route_number": 120,
+        "color": "blue"
+    },
+    {
+        "type": "Plane",
+        "capacity": 180,
+        "flight_name": "Flight-777",
+        "flight_number": 777
+    }
+]
