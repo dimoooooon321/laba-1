@@ -30,7 +30,7 @@ class Transport:
         elif data["type"] == "Train":
             return Train.from_dict(data)
         elif data["type"] == "Subway_train":
-            return Subway_train.from_dict_data(data)
+            return Subway_train.from_dict(data)
         else:
             return Transport(data["capacity"])
 
@@ -175,7 +175,64 @@ def load_from_file(filename):
         print("Файл не найден")
         return []
 
+class Subway_train(Transport):
 
+    def __init__(self, capacity: int, Subway_train_name: str, branch_number: int) -> None:
+        super().__init__(capacity)
+        self.Subway_train_name = Subway_train_name
+        self.branch_number = branch_number
+        if branch_number <= 0:
+            raise ValueError("номер рейса должен быть положительным числом")
+
+    pass
+
+    def get_subway_train_name(self) -> str:
+        return self.Subway_train_name
+
+    def get_subway_train_number(self) -> int:
+        return self.branch_number
+
+    def set_subway_train_number(self, branch_number):
+        self.branch_number = branch_number
+
+    def set_subway_train_name(self, Subway_train_name):
+        self.Subway_train_name = Subway_train_name
+
+    def to_dict(self) -> dict:
+        return {
+            "type": self.__class__.__name__,
+            "capacity": self.capacity,
+            "Subway_train_name": self.Subway_train_name,
+            "branch_number": self.branch_number
+        }
+
+    @staticmethod
+    def from_dict(data: dict) -> 'Subway_train':
+        return Subway_train(data["capacity"], data["train_name"], data["branch_number"])
+
+    try:
+        with open('data.json', 'r') as file:
+            data = json.load(file)
+            print("Файл успешно открыт\n")
+            print(data)
+    except IOError as e:
+        print("Не удалось прочитать файл")
+        data = []
+
+# Функция для записи списка объектов в JSON-файл
+def save_to_file(filename, objects):
+    with open(filename, 'w') as file:
+        json.dump([obj.to_dict() for obj in objects], file, indent=4)
+
+# Функция для чтения объектов из JSON-файла
+def load_from_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            data = json.load(file)
+            return [Transport.from_dict(item) for item in data]
+    except FileNotFoundError:
+        print("Файл не найден")
+        return []
 
 # Пример использования
 bus = Bus(80, 120, "blue")
