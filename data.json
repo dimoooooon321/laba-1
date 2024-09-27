@@ -1,7 +1,7 @@
 [
     {
         "type": "Bus",
-        "capacity": 40,
+        "capacity": 80,
         "route_number": 120,
         "color": "blue"
     },

@@ -27,6 +27,10 @@ class Transport:
             return Bus.from_dict(data)
         elif data["type"] == "Plane":
             return Plane.from_dict(data)
+        elif data["type"] == "Train":
+            return Train.from_dict(data)
+        elif data["type"] == "Subway_train":
+            return Subway_train.from_dict_data(data)
         else:
             return Transport(data["capacity"])
 
@@ -112,6 +116,50 @@ class Plane(Transport):
         print("Не удалось прочитать файл")
         data = []
 
+class Train(Transport):
+
+    def __init__(self, capacity: int, train_name: str, train_number: int) -> None:
+        super().__init__(capacity)
+        self.train_name = train_name
+        self.train_number = train_number
+        if train_number <= 0:
+            raise ValueError("номер рейса должен быть положительным числом")
+
+    pass
+
+    def get_train_name(self) -> str:
+        return self.train_name
+
+    def get_train_number(self) -> int:
+        return self.train_number
+
+    def set_train_number(self, train_number):
+        self.train_number = train_number
+
+    def set_train_name(self, train_name):
+        self.train_name = train_name
+
+    def to_dict(self) -> dict:
+        return {
+            "type": self.__class__.__name__,
+            "capacity": self.capacity,
+            "train_name": self.train_name,
+            "train_number": self.train_number
+        }
+
+    @staticmethod
+    def from_dict(data: dict) -> 'Train':
+        return Train(data["capacity"], data["train_name"], data["train_number"])
+
+    try:
+        with open('data.json', 'r') as file:
+            data = json.load(file)
+            print("Файл успешно открыт\n")
+            print(data)
+    except IOError as e:
+        print("Не удалось прочитать файл")
+        data = []
+
 # Функция для записи списка объектов в JSON-файл
 def save_to_file(filename, objects):
     with open(filename, 'w') as file:
@@ -127,8 +175,10 @@ def load_from_file(filename):
         print("Файл не найден")
         return []
 
+
+
 # Пример использования
-bus = Bus(40, 120, "blue")
+bus = Bus(80, 120, "blue")
 plane = Plane(180, "Flight-777", 777)
 
 # Запись объектов в файл
@@ -137,6 +187,7 @@ save_to_file('data.json', objects_to_save)
 
 # Чтение объектов из файла
 loaded_objects = load_from_file('data.json')
+
 
 for obj in loaded_objects:
     print(f"Тип: {obj.__class__.__name__}, Данные: {obj.to_dict()}")
