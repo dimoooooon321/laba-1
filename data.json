@@ -2,13 +2,13 @@
     {
         "type": "Bus",
         "capacity": 80,
-        "route_number": 120,
+        "route_number": 666,
         "color": "blue"
     },
     {
         "type": "Plane",
         "capacity": 180,
         "flight_name": "Flight-777",
-        "flight_number": 777
+        "route_number": 777
     }
 ]

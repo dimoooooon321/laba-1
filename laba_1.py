@@ -1,24 +1,138 @@
 import json
 
+# Исключение для проверки вместимости
+class Exception_capacity(Exception):
+    def __init__(self, value):
+        self.value = value
+        self.message = f"Значение {value} является недопустимым. Должно быть > 0"
+        super().__init__(self.message)
 
+# Вспомогательная функция для ввода положительного целого числа
+def input_positive_int(prompt):
+    while True:
+        try:
+            value = int(input(prompt))
+            if value <= 0:
+                raise Exception_capacity(value)
+            return value
+        except ValueError:
+            print("Ошибка: введите целое число.")
+        except Exception_capacity as e:
+            print(e.message)
+
+# Вспомогательная функция для ввода непустой строки
+def input_non_empty_str(prompt):
+    while True:
+        value = input(prompt)
+        if value.strip():
+            return value
+        print("Ошибка: строка не должна быть пустой.")
+
+# Функция выбора типа транспорта
+def choose_transport():
+    print("Выберите тип транспорта:")
+    print("1. Автобус (Bus)")
+    print("2. Самолёт (Plane)")
+    print("3. Поезд метро (Subway_train)")
+    print("4. Трамвай (Tram)")
+    choice = input("Введите номер: ")
+
+    if choice == "1":
+        return Bus(
+            capacity=input_positive_int("Введите вместимость автобуса: "),
+            route_number=input_positive_int("Введите номер маршрута: "),
+            color=input_non_empty_str("Введите цвет автобуса: ")
+        )
+    elif choice == "2":
+        return Plane(
+            capacity=input_positive_int("Введите вместимость самолёта: "),
+            flight_name=input_non_empty_str("Введите название рейса: "),
+            route_number=input_positive_int("Введите номер маршрута: ")
+        )
+    elif choice == "3":
+        return Subway_train(
+            capacity=input_positive_int("Введите вместимость поезда метро: "),
+            subway_train_name=input_non_empty_str("Введите название поезда: "),
+            route_number=input_positive_int("Введите номер маршрута: ")
+        )
+    elif choice == "4":
+        return Tram(
+            capacity=input_positive_int("Введите вместимость трамвая: "),
+            tram_name=input_non_empty_str("Введите название трамвая: "),
+            route_number=input_positive_int("Введите номер маршрута: ")
+        )
+    else:
+        print("Неверный выбор. Попробуйте снова.")
+        return choose_transport()
+
+# Функция сохранения данных в файл
+def save_to_file(filename, objects):
+    with open(filename, 'w') as file:
+        json.dump([obj.to_dict() for obj in objects], file, indent=4)
+    print(f"Данные сохранены в файл {filename}")
+
+# Функция загрузки данных из файла
+def load_from_file(filename):
+    try:
+        with open(filename, 'r') as file:
+            data = json.load(file)
+            return [Transport.from_dict(item) for item in data]
+    except FileNotFoundError:
+        print("Файл не найден")
+        return []
+
+# Основное меню
+def main():
+    objects = []
+
+    while True:
+        print("\nМеню:")
+        print("1. Добавить новый транспорт")
+        print("2. Сохранить данные в файл")
+        print("3. Загрузить данные из файла")
+        print("4. Показать все данные")
+        print("5. Выйти")
+
+        choice = input("Введите номер действия: ")
+
+        if choice == "1":
+            transport = choose_transport()
+            objects.append(transport)
+            print(f"Добавлен {transport.__class__.__name__}: {transport.to_dict()}")
+        elif choice == "2":
+            filename = input("Введите имя файла для сохранения: ")
+            save_to_file(filename, objects)
+        elif choice == "3":
+            filename = input("Введите имя файла для загрузки: ")
+            objects = load_from_file(filename)
+        elif choice == "4":
+            if objects:
+                for obj in objects:
+                    print(f"Тип: {obj.__class__.__name__}, Данные: {obj.to_dict()}")
+            else:
+                print("Нет данных для отображения.")
+        elif choice == "5":
+            break
+        else:
+            print("Неверный выбор. Попробуйте снова.")
+
+# Базовый класс Transport
 class Transport:
-    def __init__(self, capacity: int):
-        if capacity <= 0:
-            raise ValueError("Вместимость должна быть положительным числом")
+    def __init__(self, capacity=0, route_number=0):
         self.capacity = capacity
+        self.route_number = route_number
 
-    def get_capacity(self):
+    def get_route_number(self) -> int:
+        return self.route_number
+
+    def get_capacity(self) -> int:
         return self.capacity
-
-    def set_capacity(self, capacity):
-        self.capacity = capacity
-        if capacity <= 0:
-            raise ValueError("Вместимость должна быть положительным числом")
 
     def to_dict(self) -> dict:
         return {
             "type": self.__class__.__name__,
-            "capacity": self.capacity
+            "capacity": self.capacity,
+            "route_number": self.route_number
         }
 
     @staticmethod
@@ -32,67 +146,30 @@ class Transport:
         elif data["type"] == "Tram":
             return Tram.from_dict(data)
         else:
-            return Transport(data["capacity"])
+            return Transport(data["capacity"], data["route_number"])
 
-
+# Класс Bus
 class Bus(Transport):
-
-    def __init__(self, capacity: int, route_number: int, color: str = "white") -> None:
-        super().__init__(capacity)
-        self.capacity = capacity
-        self.color = color
-        self.route_number = route_number
-        if route_number <= 0:
-            raise ValueError("номер маршрута должен быть положительным числом")
-
-    def get_color(self) -> str:
-        return self.color
-
-    def get_route_number(self) -> int:
-        return self.route_number
-
-    def set_color(self, color) -> None:
+    def __init__(self, capacity: int, route_number: int, color: str = "white"):
+        super().__init__(capacity, route_number)
         self.color = color
 
-    def set_route_number(self, route_number) -> None:
-        self.route_number = route_number
-
-    # метод словаря
     def to_dict(self) -> dict:
         return {
             "type": self.__class__.__name__,
             "capacity": self.capacity,
             "route_number": self.route_number,
             "color": self.color
-
         }
 
     @staticmethod
     def from_dict(data: dict) -> 'Bus':
         return Bus(data["capacity"], data["route_number"], data["color"])
 
-
+# Класс Plane
 class Plane(Transport):
-
-    def __init__(self, capacity: int, flight_name: str, flight_number: int) -> None:
-        super().__init__(capacity)
-        self.flight_number = flight_number
-        self.flight_name = flight_name
-        if flight_number <= 0:
-            raise ValueError("номер рейса должен быть положительным числом")
-
-    pass
-
-    def get_flight_number(self) -> int:
-        return self.flight_number
-
-    def get_flihght_name(self) -> str:
-        return self.flight_name
-
-    def set_flight_number(self, flight_number):
-        self.flight_number = flight_number
-
-    def set_flight_name(self, flight_name):
+    def __init__(self, capacity: int, flight_name: str, route_number: int):
+        super().__init__(capacity, route_number)
         self.flight_name = flight_name
 
     def to_dict(self) -> dict:
@@ -100,122 +177,35 @@ class Plane(Transport):
             "type": self.__class__.__name__,
             "capacity": self.capacity,
             "flight_name": self.flight_name,
-            "flight_number": self.flight_number
+            "route_number": self.route_number
         }
 
     @staticmethod
     def from_dict(data: dict) -> 'Plane':
-        return Plane(data["capacity"], data["flight_name"], data["flight_number"])
+        return Plane(data["capacity"], data["flight_name"], data["route_number"])
 
-    try:
-        with open('data.json', 'r') as file:
-            data = json.load(file)
-            print("Файл успешно открыт\n")
-            print(data)
-    except IOError as e:
-        print("Не удалось прочитать файл")
-        data = []
-
-# Функция для записи списка объектов в JSON-файл
-def save_to_file(filename, objects):
-    with open(filename, 'w') as file:
-        json.dump([obj.to_dict() for obj in objects], file, indent=4)
-
-
-# Функция для чтения объектов из JSON-файла
-def load_from_file(filename):
-    try:
-        with open(filename, 'r') as file:
-            data = json.load(file)
-            return [Transport.from_dict(item) for item in data]
-    except FileNotFoundError:
-        print("Файл не найден")
-        return []
-
-
+# Класс Subway_train
 class Subway_train(Transport):
-
-    def __init__(self, capacity: int, Subway_train_name: str, branch_number: int) -> None:
-        super().__init__(capacity)
-        self.Subway_train_name = Subway_train_name
-        self.branch_number = branch_number
-        if branch_number <= 0:
-            raise ValueError("номер рейса должен быть положительным числом")
-
-    pass
-
-    def get_subway_train_name(self) -> str:
-        return self.Subway_train_name
-
-    def get_subway_train_number(self) -> int:
-        return self.branch_number
-
-    def set_subway_train_number(self, branch_number):
-        self.branch_number = branch_number
-
-    def set_subway_train_name(self, Subway_train_name):
-        self.Subway_train_name = Subway_train_name
+    def __init__(self, capacity: int, subway_train_name: str, route_number: int):
+        super().__init__(capacity, route_number)
+        self.subway_train_name = subway_train_name
 
     def to_dict(self) -> dict:
         return {
             "type": self.__class__.__name__,
             "capacity": self.capacity,
-            "Subway_train_name": self.Subway_train_name,
-            "branch_number": self.branch_number
+            "subway_train_name": self.subway_train_name,
+            "route_number": self.route_number
         }
 
     @staticmethod
     def from_dict(data: dict) -> 'Subway_train':
-        return Subway_train(data["capacity"], data["train_name"], data["branch_number"])
+        return Subway_train(data["capacity"], data["subway_train_name"], data["route_number"])
 
-    try:
-        with open('data.json', 'r') as file:
-            data = json.load(file)
-            print("Файл успешно открыт\n")
-            print(data)
-    except IOError as e:
-        print("Не удалось прочитать файл")
-        data = []
-
-
-# Функция для записи списка объектов в JSON-файл
-def save_to_file(filename, objects):
-    with open(filename, 'w') as file:
-        json.dump([obj.to_dict() for obj in objects], file, indent=4)
-
-
-# Функция для чтения объектов из JSON-файла
-def load_from_file(filename):
-    try:
-        with open(filename, 'r') as file:
-            data = json.load(file)
-            return [Transport.from_dict(item) for item in data]
-    except FileNotFoundError:
-        print("Файл не найден")
-        return []
-
-
+# Класс Tram
 class Tram(Transport):
-
-    def __init__(self, capacity: int, tram_name: str, tram_number: int) -> None:
-        super().__init__(capacity)
-        self.tram_name = tram_name
-        self.tram_number = tram_number
-        if tram_number <= 0:
-            raise ValueError("номер рейса должен быть положительным числом")
-
-    pass
-
-    def get_tram_name(self) -> str:
-        return self.tram_name
-
-    def get_tram_number(self) -> int:
-        return self.tram_number
-
-    def set_tram_number(self, tram_number):
-        self.tram_number = tram_number
-
-    def set_tram_name(self, tram_name):
+    def __init__(self, capacity: int, tram_name: str, route_number: int):
+        super().__init__(capacity, route_number)
         self.tram_name = tram_name
 
     def to_dict(self) -> dict:
@@ -223,50 +213,12 @@ class Tram(Transport):
             "type": self.__class__.__name__,
             "capacity": self.capacity,
             "tram_name": self.tram_name,
-            "traim_number": self.tram_number
+            "route_number": self.route_number
         }
 
     @staticmethod
     def from_dict(data: dict) -> 'Tram':
-        return Tram(data["capacity"], data["tram_name"], data["tram_number"])
+        return Tram(data["capacity"], data["tram_name"], data["route_number"])
 
-    try:
-        with open('data.json', 'r') as file:
-            data = json.load(file)
-            print("Файл успешно открыт\n")
-            print(data)
-    except IOError as e:
-        print("Не удалось прочитать файл")
-        data = []
-
-
-# Функция для записи списка объектов в JSON-файл
-def save_to_file(filename, objects):
-    with open(filename, 'w') as file:
-        json.dump([obj.to_dict() for obj in objects], file, indent=4)
-
-
-# Функция для чтения объектов из JSON-файла
-def load_from_file(filename):
-    try:
-        with open(filename, 'r') as file:
-            data = json.load(file)
-            return [Transport.from_dict(item) for item in data]
-    except FileNotFoundError:
-        print("Файл не найден")
-        return []
-
-
-# Пример использования
-bus = Bus(80, 120, "blue")
-plane = Plane(180, "Flight-777", 777)
-
-# Запись объектов в файл
-objects_to_save = [bus, plane]
-save_to_file('data.json', objects_to_save)
-
-# Чтение объектов из файла
-loaded_objects = load_from_file('data.json')
-
-for obj in loaded_objects:
-    print(f"Тип: {obj.__class__.__name__}, Данные: {obj.to_dict()}")
+if __name__ == "__main__":
+    main()

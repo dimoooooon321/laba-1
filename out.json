@@ -1,1 +1,8 @@
-[{"h": 5, "w": 10}, {"h": 80, "w": 60}]
+[
+    {
+        "type": "Subway_train",
+        "capacity": 200,
+        "subway_train_name": "kuzminki",
+        "route_number": 52
+    }
+]
