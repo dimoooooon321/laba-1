@@ -1,4 +1,6 @@
 import json
+import xml.etree.ElementTree as ET
+from xml.dom.minidom import parseString
 
 # Исключение для проверки вместимости
 class Exception_capacity(Exception):
@@ -6,6 +8,22 @@ class Exception_capacity(Exception):
         self.value = value
         self.message = f"Значение {value} является недопустимым. Должно быть > 0"
         super().__init__(self.message)
+
+# Функция для красивых отступов в XML
+def indent_xml(elem, level=0):
+    i = "\n" + level * "    "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "    "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for subelem in elem:
+            indent_xml(subelem, level + 1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
 
 # Вспомогательная функция для ввода положительного целого числа
 def input_positive_int(prompt):
@@ -65,20 +83,64 @@ def choose_transport():
         print("Неверный выбор. Попробуйте снова.")
         return choose_transport()
 
-# Функция сохранения данных в файл
-def save_to_file(filename, objects):
+# Функция сохранения данных в JSON файл
+def save_to_json(filename, objects):
     with open(filename, 'w') as file:
         json.dump([obj.to_dict() for obj in objects], file, indent=4)
     print(f"Данные сохранены в файл {filename}")
 
-# Функция загрузки данных из файла
-def load_from_file(filename):
+# Функция загрузки данных из JSON файла
+def load_from_json(filename):
     try:
         with open(filename, 'r') as file:
             data = json.load(file)
             return [Transport.from_dict(item) for item in data]
     except FileNotFoundError:
         print("Файл не найден")
+        return []
+
+# Сохранение данных в XML файл
+def save_to_xml(filename, objects):
+    root = ET.Element("Transports")
+
+    for obj in objects:
+        obj_element = ET.SubElement(root, obj.__class__.__name__)
+        for key, value in obj.to_dict().items():
+            ET.SubElement(obj_element, key).text = str(value)
+
+    indent_xml(root)
+    tree = ET.ElementTree(root)
+    tree.write(filename, encoding="utf-8", xml_declaration=True)
+    print(f"Данные сохранены в XML файл {filename}")
+
+# Загрузка данных из XML файла
+def load_from_xml(filename):
+    try:
+        tree = ET.parse(filename)
+        root = tree.getroot()
+
+        objects = []
+        for obj_element in root:
+            obj_data = {}
+            for data in obj_element:
+                obj_data[data.tag] = data.text
+
+            # Преобразуем строки в соответствующие типы данных
+            if 'capacity' in obj_data:
+                obj_data['capacity'] = int(obj_data['capacity'])
+            if 'route_number' in obj_data:
+                obj_data['route_number'] = int(obj_data['route_number'])
+
+            # Восстановление объекта на основе типа
+            obj = Transport.from_dict(obj_data)
+            objects.append(obj)
+
+        return objects
+    except FileNotFoundError:
+        print("Файл не найден")
+        return []
+    except ET.ParseError:
+        print("Ошибка разбора XML")
         return []
 
 # Основное меню
@@ -88,10 +150,12 @@ def main():
     while True:
         print("\nМеню:")
         print("1. Добавить новый транспорт")
-        print("2. Сохранить данные в файл")
-        print("3. Загрузить данные из файла")
+        print("2. Сохранить данные в файл Json")
+        print("3. Загрузить данные из файла Json")
         print("4. Показать все данные")
-        print("5. Выйти")
+        print("5. Сохранить данные в XML файл")
+        print("6. Загрузить данные из XML файла")
+        print("7. Выйти")
 
         choice = input("Введите номер действия: ")
 
@@ -101,10 +165,10 @@ def main():
             print(f"Добавлен {transport.__class__.__name__}: {transport.to_dict()}")
         elif choice == "2":
             filename = input("Введите имя файла для сохранения: ")
-            save_to_file(filename, objects)
+            save_to_json(filename, objects)
         elif choice == "3":
             filename = input("Введите имя файла для загрузки: ")
-            objects = load_from_file(filename)
+            objects = load_from_json(filename)
         elif choice == "4":
             if objects:
                 for obj in objects:
@@ -112,6 +176,12 @@ def main():
             else:
                 print("Нет данных для отображения.")
         elif choice == "5":
+            filename = input("Введите имя XML файла для сохранения: ")
+            save_to_xml(filename, objects)
+        elif choice == "6":
+            filename = input("Введите имя XML файла для загрузки: ")
+            objects = load_from_xml(filename)
+        elif choice == "7":
             break
         else:
             print("Неверный выбор. Попробуйте снова.")

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Transports>
+  <Bus>
+    <type>Bus</type>
+    <capacity>80</capacity>
+    <route_number>666</route_number>
+    <color>blue</color>
+    </Bus>
+  <Plane>
+    <type>Plane</type>
+    <capacity>180</capacity>
+    <flight_name>Flight-777</flight_name>
+    <route_number>777</route_number>
+    </Plane>
+  </Transports>
