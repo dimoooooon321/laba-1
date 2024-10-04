@@ -1,6 +1,6 @@
 import json
 import xml.etree.ElementTree as ET
-from xml.dom.minidom import parseString
+import os
 
 # Исключение для проверки вместимости
 class Exception_capacity(Exception):
@@ -24,6 +24,12 @@ def indent_xml(elem, level=0):
     else:
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
+
+# функция для проверки расширения файла
+def chek_file_extencion(filename, extension):
+    file_extencion = os.path.splitext(filename)[1][1:]
+    return file_extencion.lower() == extension.lower()
+
 
 # Вспомогательная функция для ввода положительного целого числа
 def input_positive_int(prompt):
@@ -164,11 +170,19 @@ def main():
             objects.append(transport)
             print(f"Добавлен {transport.__class__.__name__}: {transport.to_dict()}")
         elif choice == "2":
-            filename = input("Введите имя файла для сохранения: ")
-            save_to_json(filename, objects)
+            while True:
+                filename = input("Введите имя файла для сохранения: ")
+                if(chek_file_extencion(filename, "json")):
+                    save_to_json(filename, objects)
+                    break
+                else: print("неверный формат файла")
         elif choice == "3":
             filename = input("Введите имя файла для загрузки: ")
-            objects = load_from_json(filename)
+            while True:
+                if(chek_file_extencion(filename,"json")):
+                    objects = load_from_json(filename)
+                    break
+                else: print("неверный формат файла")
         elif choice == "4":
             if objects:
                 for obj in objects:
@@ -176,11 +190,20 @@ def main():
             else:
                 print("Нет данных для отображения.")
         elif choice == "5":
-            filename = input("Введите имя XML файла для сохранения: ")
-            save_to_xml(filename, objects)
+            while True:
+                filename = input("Введите имя файла в формате 'example.xml' для сохранения: ")
+                if (chek_file_extencion(filename,"xml")) == True:
+                    save_to_xml(filename, objects)
+                    break
+                else:print("неверный формат файла")
         elif choice == "6":
-            filename = input("Введите имя XML файла для загрузки: ")
-            objects = load_from_xml(filename)
+            while True:
+                filename = input("Введите имя файла в формате 'example.xml' для загрузки: ")
+                if (chek_file_extencion(filename, "xml")) == True:
+                    objects = load_from_xml(filename)
+                    break
+                else:
+                    print("неверный формат файла")
         elif choice == "7":
             break
         else:
@@ -188,7 +211,7 @@ def main():
 
 # Базовый класс Transport
 class Transport:
-    def __init__(self, capacity=0, route_number=0):
+    def __init__(self, capacity = 0, route_number = 0):
         self.capacity = capacity
         self.route_number = route_number
 
